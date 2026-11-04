@@ -1,5 +1,4 @@
-
-name: Build WordWise APK
+name: Build Debug APK
 
 on:
   workflow_dispatch:
@@ -9,7 +8,6 @@ on:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -22,17 +20,23 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 8.9
+      - name: Extract Project ZIP
+        run: |
+          unzip -o WordWiseOffline-Android-Project.zip -d extracted
+
+      - name: Locate Gradle Project
+        run: |
+          find extracted -name settings.gradle.kts -o -name settings.gradle
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
+        run: |
+          PROJECT_DIR=$(dirname "$(find extracted -name settings.gradle.kts -o -name settings.gradle | head -n 1)")
+          cd "$PROJECT_DIR"
+          gradle assembleDebug --stacktrace
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: WordWise-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: WordWise-Debug-APK
+          path: extracted/**/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
